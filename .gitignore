@@ -1,0 +1,21 @@
+# Editor Config
+.editorconfig
+
+# ESLint
+.eslintrc
+
+# Dependency directory
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.DS_Store
+.idea
+.vscode
