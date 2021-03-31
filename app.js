@@ -1,4 +1,3 @@
-const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const router = require('./routes');
@@ -25,7 +24,4 @@ app.use((req, res, next) => {
   next();
 });
 app.use(router);
-
-app.use(express.static(path.join(__dirname, 'public')));
-
 app.listen(PORT);

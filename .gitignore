@@ -1,9 +1,3 @@
-# Editor Config
-.editorconfig
-
-# ESLint
-.eslintrc
-
 # Dependency directory
 node_modules
 
