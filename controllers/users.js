@@ -1,23 +1,23 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const errorHandler = require('../errors/error-handler');
+const AuthError = require('../errors/auth-error');
+const ValidationError = require('../errors/validation-error');
 
-module.exports.getUsers = (req, res) => User.find({})
+module.exports.getUsers = (req, res, next) => User.find({})
   .orFail()
   .then((users) => {
     res.send({ data: users });
   })
   .catch((err) => {
-    if (err.name === 'CastError') {
-      res.status(400).send({ message: 'Переданы некорректные данные' });
-    } else if (err.name === 'DocumentNotFoundError') {
-      res.status(404).send({ message: 'Пользователи не найдены' });
-    } else {
-      res.status(500).send({ message: err.message });
-    }
+    errorHandler(err, next, {
+      CastErrorMessage: 'Переданы некорректные данные',
+      DocumentNotFoundErrorMessage: 'Пользователи не найдены',
+    });
   });
 
-module.exports.getUserById = (req, res) => {
+module.exports.getUserById = (req, res, next) => {
   const { userId } = req.params;
   User.findById(userId)
     .orFail()
@@ -25,17 +25,14 @@ module.exports.getUserById = (req, res) => {
       res.send({ data: user });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Пользователь с указанным id не найден' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        CastErrorMessage: 'Переданы некорректные данные',
+        DocumentNotFoundErrorMessage: 'Пользователь с указанным id не найден',
+      });
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     name,
     about,
@@ -45,8 +42,8 @@ module.exports.createUser = (req, res) => {
   } = req.body;
 
   if (!email || !password) {
-    res.status(400).send({ message: 'Email или пароль не могут быть пустыми' });
-    return;
+    const error = new ValidationError('Email или пароль не могут быть пустыми');
+    next(error);
   }
 
   bcrypt.hash(password, 10)
@@ -67,28 +64,25 @@ module.exports.createUser = (req, res) => {
       });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Ошибка валидации данных' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        ValidationErrorMessage: 'Ошибка валидации данных',
+        MongoDuplicateEmailErrorMessage: 'Пользователь с таким Email уже зарегистрирован',
+      });
     });
 };
 
-module.exports.getUserData = (req, res) => User.findById(req.user._id)
+module.exports.getUserData = (req, res, next) => User.findById(req.user._id)
   .orFail()
   .then((user) => {
     res.send({ data: user });
   })
   .catch((err) => {
-    if (err.name === 'DocumentNotFoundError') {
-      res.status(404).send({ message: 'Пользователь с указанным id не найден' });
-    } else {
-      res.status(500).send({ message: err.message });
-    }
+    errorHandler(err, next, {
+      DocumentNotFoundErrorMessage: 'Пользователь с указанным id не найден',
+    });
   });
 
-module.exports.updateUserData = (req, res) => {
+module.exports.updateUserData = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -105,19 +99,15 @@ module.exports.updateUserData = (req, res) => {
     .orFail()
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Ошибка валидации данных' });
-      } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Пользователь с указанным id не найден' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        CastErrorMessage: 'Переданы некорректные данные',
+        ValidationErrorMessage: 'Ошибка валидации данных',
+        DocumentNotFoundErrorMessage: 'Пользователь с указанным id не найден',
+      });
     });
 };
 
-module.exports.updateUserAvatar = (req, res) => {
+module.exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -131,19 +121,15 @@ module.exports.updateUserAvatar = (req, res) => {
     .orFail()
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Ошибка валидации данных' });
-      } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Пользователь с указанным id не найден' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        CastErrorMessage: 'Переданы некорректные данные',
+        ValidationErrorMessage: 'Ошибка валидации данных',
+        DocumentNotFoundErrorMessage: 'Пользователь с указанным id не найден',
+      });
     });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
@@ -159,5 +145,8 @@ module.exports.login = (req, res) => {
       });
       res.send({ token });
     })
-    .catch((err) => res.status(401).send({ message: err.message }));
+    .catch((err) => {
+      const error = new AuthError(err.message);
+      next(error);
+    });
 };

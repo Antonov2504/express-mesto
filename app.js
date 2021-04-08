@@ -30,4 +30,14 @@ app.post('/signup', createUser);
 app.use(auth);
 
 app.use(router);
+
+app.use((err, req, res, next) => {
+  const { statusCode = 500, message } = err;
+  res.status(statusCode).send({
+    message: statusCode === 500
+      ? 'На сервере произошла ошибка'
+      : message,
+  });
+  next();
+});
 app.listen(PORT);

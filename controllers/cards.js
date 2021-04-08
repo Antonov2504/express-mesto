@@ -1,32 +1,31 @@
 const Card = require('../models/card');
+const errorHandler = require('../errors/error-handler');
+const ForbiddenError = require('../errors/forbidden-error');
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .orFail()
     .then((cards) => res.send({ data: cards }))
     .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Пользователи не найдены' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        CastErrorMessage: 'Переданы некорректные данные',
+        DocumentNotFoundErrorMessage: 'Пользователи не найдены',
+      });
     });
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.send({ data: card }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Ошибка валидации данных' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        ValidationErrorMessage: 'Ошибка валидации данных',
+      });
     });
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findById(cardId)
     .orFail()
@@ -36,25 +35,21 @@ module.exports.deleteCard = (req, res) => {
           .orFail()
           .then(res.send({ message: 'Карточка удалена' }))
           .catch((err) => {
-            if (err.name === 'DocumentNotFoundError') {
-              res.status(404).send({ message: 'Карточка с указанным id не найдена' });
-            } else {
-              res.status(500).send({ message: err.message });
-            }
+            errorHandler(err, next, {
+              DocumentNotFoundErrorMessage: 'Карточка с указанным id не найдена',
+            });
           });
       }
-      return res.status(403).send({ message: 'Доступ запрещен. Возможно удаление только собственной карточки' });
+      throw new ForbiddenError('Доступ запрещен. Возможно удаление только собственной карточки');
     })
     .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Карточка с указанным id не найдена' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        DocumentNotFoundErrorMessage: 'Карточка с указанным id не найдена',
+      });
     });
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -63,17 +58,14 @@ module.exports.likeCard = (req, res) => {
     .orFail()
     .then((card) => res.send({ data: card }))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Карточка с указанным id не найдена' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        CastErrorMessage: 'Переданы некорректные данные',
+        DocumentNotFoundErrorMessage: 'Карточка с указанным id не найдена',
+      });
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -82,12 +74,9 @@ module.exports.dislikeCard = (req, res) => {
     .orFail()
     .then((card) => res.send({ data: card }))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Карточка с указанным id не найдена' });
-      } else {
-        res.status(500).send({ message: err.message });
-      }
+      errorHandler(err, next, {
+        CastErrorMessage: 'Переданы некорректные данные',
+        DocumentNotFoundErrorMessage: 'Карточка с указанным id не найдена',
+      });
     });
 };
