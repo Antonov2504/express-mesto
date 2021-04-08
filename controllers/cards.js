@@ -28,13 +28,25 @@ module.exports.createCard = (req, res) => {
 
 module.exports.deleteCard = (req, res) => {
   const { cardId } = req.params;
-  Card.findByIdAndRemove(cardId)
+  Card.findById(cardId)
     .orFail()
-    .then((card) => res.send({ data: card }))
+    .then((card) => {
+      if (card.owner.equals(req.user._id)) {
+        return Card.findByIdAndRemove(cardId)
+          .orFail()
+          .then(res.send({ message: 'Карточка удалена' }))
+          .catch((err) => {
+            if (err.name === 'DocumentNotFoundError') {
+              res.status(404).send({ message: 'Карточка с указанным id не найдена' });
+            } else {
+              res.status(500).send({ message: err.message });
+            }
+          });
+      }
+      return res.status(403).send({ message: 'Доступ запрещен. Возможно удаление только собственной карточки' });
+    })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
-      } else if (err.name === 'DocumentNotFoundError') {
+      if (err.name === 'DocumentNotFoundError') {
         res.status(404).send({ message: 'Карточка с указанным id не найдена' });
       } else {
         res.status(500).send({ message: err.message });
