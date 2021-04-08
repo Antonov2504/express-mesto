@@ -20,6 +20,7 @@ module.exports.createCard = (req, res, next) => {
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       errorHandler(err, next, {
+        CastErrorMessage: 'Переданы некорректные данные',
         ValidationErrorMessage: 'Ошибка валидации данных',
       });
     });
@@ -36,6 +37,7 @@ module.exports.deleteCard = (req, res, next) => {
           .then(res.send({ message: 'Карточка удалена' }))
           .catch((err) => {
             errorHandler(err, next, {
+              CastErrorMessage: 'Переданы некорректные данные',
               DocumentNotFoundErrorMessage: 'Карточка с указанным id не найдена',
             });
           });
@@ -44,6 +46,7 @@ module.exports.deleteCard = (req, res, next) => {
     })
     .catch((err) => {
       errorHandler(err, next, {
+        CastErrorMessage: 'Переданы некорректные данные',
         DocumentNotFoundErrorMessage: 'Карточка с указанным id не найдена',
       });
     });

@@ -10,12 +10,7 @@
       }
     ],
     "no-useless-escape": [
-      "error",
-      {
-        "allow": [
-          "/"
-        ]
-      }
+      "off"
     ]
   }
 }
