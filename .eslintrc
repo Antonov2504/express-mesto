@@ -8,6 +8,14 @@
           "_id"
         ]
       }
+    ],
+    "no-useless-escape": [
+      "error",
+      {
+        "allow": [
+          "/"
+        ]
+      }
     ]
   }
 }
